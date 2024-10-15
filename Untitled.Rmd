@@ -1,0 +1,49 @@
+---
+title: "Untitled"
+author: "Jinran Li"
+date: "2024-09-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+
+df <- read.csv("perception_complete.csv")
+
+# 创建分面图，根据语言和目标类别（click vs knock）
+ggplot(df, aes(x = vk, y = rating, group = target, shape = target, linetype = target)) +
+  stat_summary(fun = mean, geom = "line", size = 1) +  # 绘制均值线
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +  # 绘制误差条
+  stat_summary(fun = mean, geom = "point", size = 3) +  # 绘制均值点
+  facet_wrap(~lang_source, scales = "free_x", labeller = as_labeller(c("ceb" = "Cebuano", "spn" = "Spanish"))) + 
+  theme_minimal() +  
+  labs(x = "Coarticulated [vk]", y = "Rating", shape = "", linetype = "", 
+       title = "A", subtitle = "B") +  # 添加标签
+  theme(
+    axis.title.x = element_text(size = 14),  # 调整x轴标签字体大小
+    axis.title.y = element_text(size = 14),  # 调整y轴标签字体大小
+    plot.title = element_text(hjust = -0.1, face = "bold", size = 16),  # 调整标题格式
+    plot.subtitle = element_text(hjust = -0.1, face = "bold", size = 16),  # 调整副标题格式
+    strip.text = element_text(face = "bold", size = 14),  # 调整分面标题格式
+    legend.position = "bottom",  # 调整图例位置
+    legend.title = element_blank()  # 移除图例标题
+  ) +
+  scale_shape_manual(values = c(16, 17)) +  # 自定义点的形状
+  scale_linetype_manual(values = c("dashed", "solid"))  # 自定义线型
+
+
+
+
+
+```
+
