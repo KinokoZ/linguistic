@@ -246,16 +246,27 @@ ggplot(df, aes(x = Fitted, y = Scaled_Residuals)) +
 library(ordinal)
 fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click)
 pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr1)
+plot(pr1, main="ceb_click")
+
 fm2 <- clmm2(rating ~ vk, random=speaker, data=ceb_knock)
 pr2 <- profile(fm2, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr2)
+plot(pr2, main="ceb_knock")
+
 fm3 <- clmm2(rating ~ vk, random=speaker, data=spn_click)
 pr3 <- profile(fm3, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr3)
+plot(pr3, main="spn_click")
+
 fm4 <- clmm2(rating ~ vk, random=speaker, data=spn_knock)
 pr4 <- profile(fm4, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr4)
+plot(pr4, main="spn_knock")
+
+```
+
+
+```{r}
+fm5 <- clmm2(rating ~ vk, random=speaker, data=perception_complete)
+pr5 <- profile(fm5, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr5,main="all_data")
 ```
 
 
@@ -266,7 +277,7 @@ ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
 ord.re <- order(fm1$ranef)
 ci <- ci[order(fm1$ranef),]
 plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
-     xlab="Speaker", ylab="Speaker effect")
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click")
 axis(1, at=1:length(fm1$ranef), labels = ord.re)
 axis(2)
 for(i in 1:length(fm1$ranef)) {
@@ -282,7 +293,7 @@ ci <- fm2$ranef + qnorm(0.975) * sqrt(fm2$condVar) %o% c(-1, 1)
 ord.re <- order(fm2$ranef)
 ci <- ci[order(fm2$ranef),]
 plot(1:length(fm2$ranef), fm2$ranef[ord.re], axes=FALSE, ylim=range(ci),
-     xlab="Speaker", ylab="Speaker effect")
+     xlab="Speaker", ylab="Speaker effect",main="ceb_knock")
 axis(1, at=1:length(fm2$ranef), labels = ord.re)
 axis(2)
 for(i in 1:length(fm2$ranef)) {
@@ -298,7 +309,7 @@ ci <- fm3$ranef + qnorm(0.975) * sqrt(fm3$condVar) %o% c(-1, 1)
 ord.re <- order(fm3$ranef)
 ci <- ci[order(fm3$ranef),]
 plot(1:length(fm3$ranef), fm3$ranef[ord.re], axes=FALSE, ylim=range(ci),
-     xlab="Speaker", ylab="Speaker effect")
+     xlab="Speaker", ylab="Speaker effect",main="spn_click")
 axis(1, at=1:length(fm3$ranef), labels = ord.re)
 axis(2)
 for(i in 1:length(fm3$ranef)) {
@@ -314,7 +325,7 @@ ci <- fm4$ranef + qnorm(0.975) * sqrt(fm4$condVar) %o% c(-1, 1)
 ord.re <- order(fm4$ranef)
 ci <- ci[order(fm4$ranef),]
 plot(1:length(fm4$ranef), fm4$ranef[ord.re], axes=FALSE, ylim=range(ci),
-     xlab="Speaker", ylab="Speaker effect")
+     xlab="Speaker", ylab="Speaker effect",main="spn_knock")
 axis(1, at=1:length(fm4$ranef), labels = ord.re)
 axis(2)
 for(i in 1:length(fm4$ranef)) {
@@ -326,10 +337,99 @@ abline(h = 0, lty=2)
 
 
 ```{r}
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click)
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_logit")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_logit")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,link ="probit")
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_probit")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_probit")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,link ="loglog")
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_loglog")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_loglog")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
 ```
 
 
+
 ```{r}
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click)
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_flexible")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_flexible")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,threshold="symmetric")
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_symmetric")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_symmetric")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,threshold = "equidistant")
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_equidistant")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_equidistant")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
 ```
 
 
