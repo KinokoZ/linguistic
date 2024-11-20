@@ -85,7 +85,7 @@ spn_knock$rating <- as.ordered(spn_knock$rating)
 modelSK <- clmm(rating ~ vk +(1|speaker), data = spn_knock,link="probit")
 
 
-predicted_effects <- ggpredict(modelCC, terms = "vk")
+predicted_effects <- ggpredict(modelCC)
 
 plot(predicted_effects)
 
@@ -110,7 +110,8 @@ plot(emm_results)
 
 predicted_effects <- ggpredict(modelSC, terms = "vk")
 
-plot(predicted_effects)
+plot(predicted_effects) +
+  ggtitle("spn_click")
 
 
 emm_results <- emmeans(modelSC, ~ vk)
@@ -130,13 +131,39 @@ emm_results <- emmeans(modelSK, ~ vk)
 plot(emm_results)
 
 
-library(sjPlot)
 
-plot_model(modelCC, terms = c("1|2","2|3","3|4","4|5","5|6","6|7","7|8","8|9","9|10"))  
 
-plot_model(modelCK, terms = c("1|2","2|3","3|4","4|5","5|6","6|7","7|8","8|9","9|10"))  
 
-plot_model(modelSC, terms = c("1|2","2|3","3|4","4|5","5|6","6|7","7|8","8|9","9|10"))  
 
-plot_model(modelSK, terms = c("1|2","2|3","3|4","4|5","5|6","6|7","7|8","8|9","9|10"))  
+
+
+
+
+
+
+
+
+
+
+
+# 加载必要的库
+library(ordinal)
+
+# 拟合CLMM模型
+modelCC <- clmm2(rating ~ vk, random = speaker, data = ceb_click,Hess = TRUE)
+
+# 计算置信区间
+confint(profile(modelCC), parm = seq_along(names(coef(modelCC))), level = 0.95)
+
+# 生成和绘制profile
+profile_modelCC <- profile(modelCC, alpha = 0.01, nSteps = 20, trace = 1)
+plot(profile_modelCC, parm = seq_along(names(coef(modelCC))), level = c(0.95, 0.99),
+     Log = FALSE, relative = TRUE, fig = TRUE, n = 1e3)
+
+
+
+
+
+
+
 

@@ -1,0 +1,209 @@
+---
+title: "Consulting Report"
+author: "sts"
+date: "2024-11-11"
+output: 
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(rstanarm)
+library(dplyr)
+library(lme4)
+library(ggplot2)
+
+# setwd("C:/Users/16597/Downloads")
+perception_complete<-read.csv("perception_complete.csv")
+head(perception_complete)
+```
+
+
+##Rating Distribution EDA 
+```{r}
+ceb_click <- perception_complete %>%
+  filter(lang_source == "ceb", target == "click") %>% filter(rating %in% c(1,2,3,4,5,6,7,8,9,10))
+rating_freqcc <- perception_complete %>%
+  filter(lang_source == "ceb", target == "click") %>%
+  filter(rating %in% 1:10) %>%
+  count(rating)
+
+ceb_knock <- perception_complete %>%
+  filter(lang_source == "ceb", target == "knock") %>% filter(rating %in% c(1,2,3,4,5,6,7,8,9,10))
+rating_freqck <- perception_complete %>%
+  filter(lang_source == "ceb", target == "knock") %>%
+  filter(rating %in% 1:10) %>%
+  count(rating)
+
+spn_click <- perception_complete %>%
+  filter(lang_source == "spn", target == "click") %>% filter(rating %in% c(1,2,3,4,5,6,7,8,9,10))
+rating_freqsc <- perception_complete %>%
+  filter(lang_source == "spn", target == "click") %>%
+  filter(rating %in% 1:10) %>%
+  count(rating)
+
+spn_knock <- perception_complete %>%
+  filter(lang_source == "spn", target == "knock") %>% filter(rating %in% c(1,2,3,4,5,6,7,8,9,10))
+rating_freqsk <- perception_complete %>%
+  filter(lang_source == "spn", target == "knock") %>%
+  filter(rating %in% 1:10) %>%
+  count(rating)
+
+#Plot the histogram
+ggplot(rating_freqcc, aes(x= rating, y= n))+
+geom_bar(stat = "identity", fill= "skyblue")+
+  scale_x_discrete(limit = as.factor(1:10))+
+  labs(title = "Cebuano Click Rating",
+       x = "Rate Score",
+       y = "Count")+
+  theme_minimal()
+
+ggplot(rating_freqck, aes(x= rating, y= n))+
+geom_bar(stat = "identity", fill= "blue")+
+scale_x_discrete(limit = as.factor(1:10))+
+  labs(title = "Cebuano Knock Rating",
+       x = "Rate Score",
+       y = "Count")+
+  theme_minimal()
+
+ggplot(rating_freqsc, aes(x= rating, y= n))+
+geom_bar(stat = "identity", fill= "yellow")+
+scale_x_discrete(limit = as.factor(1:10))+
+  labs(title = "Spanish Click Rating",
+       x = "Rate Score",
+       y = "Count")+
+  theme_minimal()
+
+ggplot(rating_freqsk, aes(x= rating, y= n))+
+geom_bar(stat = "identity", fill= "orange")+
+  scale_x_discrete(limit = as.factor(1:10))+
+  labs(title = "Spanish Knock Rating",
+       x = "Rate Score",
+       y = "Count")+
+  theme_minimal()
+```
+##Linguistic constraints in click and knock onomatopoeias
+Teaching Fellow- Masanao Yajima
+Faculty Advisor- Vindy
+
+##Abstract：
+This study investigates the linguistic constraints and sound-symbolic associations in click and knock onomatopoeias, specifically focusing on the phonetic segments [I know], [uk], and [ok] within the Cebuano and Spanish languages. Two experiments were conducted: a production task and a perception task. The perception task engaged native speakers in rating the association of isolated vowel sounds with typical click and knock sounds, using stimuli from both Cebuano and Spanish. Results indicated that specific vowel sounds elicited different associations based on linguistic background, with click and knock sounds demonstrating varying average ratings across languages. Linear mixed-effects and ordinal regression models were used to analyze the data, suggesting the influence of sound symbolism on language perception.
+
+
+##Introduction
+Onomatopoeias are words that imitate real-world sounds, showing how language connects with perception. This study focuses on sound symbolism, where certain sounds are linked to specific meanings in different languages. We explore “click” and “knock” onomatopoeias in Cebuano and Spanish, looking at how native speakers of each language relate these sounds to particular phonetic segments. The results aim to shed light on cross-linguistic sound symbolism and the role of context in shaping onomatopoeic expressions.
+In Cebuano the onomatopoeic words hagtik and hagtuk represent clicking and tapping sounds, with a clear difference in their vowels. The vowel /i/ in hagtik contrasts with the /u/ in hagtuk. This difference shows Cebuano’s phonological choices for modeling different sounds. The high front vowel /i/ often represents light, sharp sounds like clicks, while the non-low back vowel /u/ is commonly used for dull, low-frequency sounds, such as tapping. Additionally, hagtak with the vowel /a/ conveys cracking or falling sounds. This pattern of vowel choice is seen across many languages, showing a preference for high front and non-low back vowels in onomatopoeia.
+
+
+##Linear Mixed Effect Model
+  A Linear Mixed-Effects Model (LMM) is a statistical approach that extends standard linear regression by allowing both fixed effects and random effects. This model is particularly useful when data are collected in hierarchical or grouped structures, such as repeated measurements over time for the same individuals or data from different clusters. The fixed effects capture overall patterns across all groups, while the random effects account for variations within specific groups, improving the model’s accuracy when observations are not independent. By incorporating both levels of effects, LMMs handle correlated data, account for variability within groups, and produce more reliable estimates, especially when some groups have fewer observations.
+  For our project, the client had previously generated a linear mixed-effects model on his own. To examine and validate his results, we generated four additional models of our own: ceb_click, ceb_knock, spn_click, and spn_knock. Each of these models focuses on specific subsets of the original dataset, perception_complete. For instance, the ceb_click model includes only the ratings provided by Cebuano speakers for "click" sounds, filtering out all other data. Similarly, ceb_knock examines feedback from Cebuano speakers on "knock" sounds, while spn_click and spn_knock focus on the corresponding ratings from Spanish speakers. This approach allows us to explore differences in perception between languages and sound types, ensuring a thorough evaluation of the client's initial findings.
+
+```{r, echo=FALSE}
+LmerCC <- lmer(rating ~ vk + (1 | speaker), data = ceb_click)
+summary(LmerCC)
+```
+  In the Cebuano click model, for the random effects, the variance of the intercept for the speaker is estimated at 2.119, with a standard deviation of 1.456. The residual variance is 4.587, with a standard deviation of 2.142. This indicates that there is notable variability in ratings between speakers.
+  Regarding the fixed effects, the intercept has an estimate of 3.1429 (p < 0.001), indicating that the baseline level of the rating is significantly above zero. The variable [ik] has an estimate of 1.0595 with a p-value of 0.00456, suggesting it has a statistically significant positive effect on the rating at the 1% level. Similarly, the variable [uk] has an estimate of 0.8571 with a p-value of 0.02131, indicating a significant positive impact on the rating at the 5% level.
+
+```{r, echo=FALSE}
+LmerCK <- lmer(rating ~ vk + (1 | speaker), data = ceb_knock)
+summary(LmerCK)
+```
+  In the Cebuano knock model, in terms of random effects, the variance for the intercept among speakers is 3.650, with a standard deviation of 1.910, indicating substantial variability in ratings between different speakers. The residual variance is 4.345, with a standard deviation of 2.084, showing variability that is not explained by the fixed effects.
+  For the fixed effects, the intercept is highly significant, with an estimate of 4.1786 (p < 0.001). This suggests that the baseline level of the rating is significantly positive. The variable [ik] has an estimate of -0.6905 with a p-value of 0.056213, indicating a negative effect on the rating, though it is only marginally significant at the 10% level. On the other hand, [uk] shows a significant positive effect, with an estimate of 1.2262 and a highly significant p-value of 0.000781 (p < 0.001).
+
+```{r, echo=FALSE}
+LmerSC <- lmer(rating ~ vk + (1 | speaker), data = spn_click)
+summary(LmerSC)
+```
+
+  The third model is for Spanish click, for the random effects, the variance of the intercept for speakers is 0.976, with a standard deviation of 0.9879, indicating moderate variability between speakers. The residual variance is 1.311, with a standard deviation of 1.1451, which reflects the unexplained variation in ratings beyond the fixed effects.
+  Regarding the fixed effects, the intercept is estimated at 2.30357, with a highly significant p-value of 3.62e-07 (p < 0.001), indicating a strong positive baseline rating. Among the variables, [ek] shows a negative estimate of -0.44643, with a p-value of 0.0939, which is marginally significant at the 10% level. This suggests a potential but weak negative effect on the rating. The other variables, [ik], [uk], and [ok], do not exhibit significant effects (p > 0.1), implying that they do not significantly influence the ratings in this model.
+
+```{r, echo=FALSE}
+LmerSK <- lmer(rating ~ vk + (1 | speaker), data = spn_knock)
+summary(LmerSK)
+```
+
+ The last one we examined is the Spanish knock model, for the random effect, the variance of the intercept for speakers is estimated at 4.264, with a standard deviation of 2.065, indicating substantial variability in ratings across speakers. The residual variance is 5.521, with a standard deviation of 2.350, showing a relatively high level of unexplained variance in the model.
+  For the fixed effects, the intercept has a highly significant estimate of 3.8929 (p < 0.001), indicating a strong baseline rating. However, none of the other variables ([ek], [ik], [uk], [ok]) show statistically significant effects (p > 0.1). The estimates for these variables range from 0.1071 for [ek] to 0.8571 for [ok], but their high p-values suggest that these variables do not have a significant influence on the rating in this model.
+
+##Model Evaluation
+
+  Based on the model results, we found that in several models, the fixed effects (e.g., [ik], [ek], [uk]) are not statistically significant. This suggests that the chosen predictors might not be the best factors for explaining the variability in ratings. 
+  However, our analysis revealed several issues with the data and model assumptions. First, the response variable was not continuous but rather discrete, the ratings are integers on a bounded scale, making the response variable discrete and ordinal, which violated the assumptions of models that expected continuous outcomes. Second, there was strong heteroscedasticity present, as indicated by non-constant variance across the fitted values, suggesting that the variance of residuals changed with the level of the predicted outcome. Finally, the residuals exhibited skewness, implying a violation of the normality assumption, which was critical for the validity of standard linear mixed models. These violations suggested that alternative modeling approaches better suited to ordinal or discrete data, as well as methods that could handle heteroscedasticity and non-normal residuals, would have been more appropriate.
+  We conducted four sets of models using Scale-location Plots and Normal Q-Q plots. We used the scale-location plot instead of the residuals vs. fitted values plot to check for heteroscedasticity because the scale-location plot specifically shows how the variability of residuals changes with fitted values. In the plot, the y-axis represents the square root of the absolute standardized residuals, making it easier to detect patterns in the spread of the residuals. The traditional residuals vs. fitted plot primarily highlights deviations from linearity but may not be as effective in revealing changes in residual spread, especially when variability increases or decreases systematically with the fitted values. 
+  In our research, we examined four models, we found that the scale-location plots showed a noticeable pattern, indicating heteroscedasticity (Non-constant Variance). Specifically, the residuals exhibited increasing variance with higher fitted values, suggesting that the assumption of constant variance was violated. This pattern was particularly pronounced in the Cebuano dataset, where the spread of residuals increased sharply as fitted values grew, while the Spanish dataset showed a similar but less steep trend.
+  
+```{r, echo = FALSE}
+df <- data.frame(Fitted = fitted(LmerCC), 
+                 Scaled_Residuals = sqrt(abs(residuals(LmerCC))))
+
+ggplot(df, aes(x = Fitted, y = Scaled_Residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scale-Location Plot",
+       x = "Fitted Values",
+       y = "Square Root of Standardized Residuals")
+
+df <- data.frame(Fitted = fitted(LmerCK), 
+                 Scaled_Residuals = sqrt(abs(residuals(LmerCK))))
+
+ggplot(df, aes(x = Fitted, y = Scaled_Residuals)) +
+  
+  
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scale-Location Plot",
+       x = "Fitted Values",
+       y = "Square Root of Standardized Residuals")
+
+df <- data.frame(Fitted = fitted(LmerSC), 
+                 Scaled_Residuals = sqrt(abs(residuals(LmerSC))))
+
+ggplot(df, aes(x = Fitted, y = Scaled_Residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scale-Location Plot",
+       x = "Fitted Values",
+       y = "Square Root of Standardized Residuals")
+
+df <- data.frame(Fitted = fitted(LmerSK), 
+                 Scaled_Residuals = sqrt(abs(residuals(LmerSK))))
+
+ggplot(df, aes(x = Fitted, y = Scaled_Residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scale-Location Plot",
+       x = "Fitted Values",
+       y = "Square Root of Standardized Residuals")
+  
+```
+
+  We used the Q-Q plot to check for skewness because it visually compares the distribution of residuals to a theoretical normal distribution. In a Q-Q plot, if the residuals follow a normal distribution, the points will align closely along the 45-degree line. However, if the residuals are skewed, the points will deviate systematically from this line—curving upwards for right skewness or downwards for left skewness.
+  Based on the provided sequence of Q-Q plots for the four datasets (ceb_click, ceb_knock, spn_click, and spn_knock), we observed some deviations from normality, especially in the tails of the distributions. For ceb_click, there are moderate deviations at both ends, indicating slight skewness or heavy tails. ceb_knock and spn_click show more pronounced deviations at the upper end, suggesting potential right-skewed distributions or outliers. Finally, spn_knock also exhibits deviations in both tails, though it appears less severe than spn_click. These patterns indicate that while most of the data generally aligns with normality, there are some skewness in certain subsets, which impact model assumptions.
+
+```{r, echo=FALSE}
+residuals <- resid(LmerCC)
+qqnorm(residuals)
+qqline(residuals, col = "red", lwd = 2)  # Add a reference line
+shapiro.test(residuals)
+
+residuals <- resid(LmerCK)
+qqnorm(residuals)
+qqline(residuals, col = "red", lwd = 2)  # Add a reference line
+shapiro.test(residuals)
+
+residuals <- resid(LmerSC)
+qqnorm(residuals)
+qqline(residuals, col = "red", lwd = 2)  # Add a reference line
+shapiro.test(residuals)
+
+residuals <- resid(LmerSK)
+qqnorm(residuals)
+qqline(residuals, col = "red", lwd = 2)  # Add a reference line
+shapiro.test(residuals)
+
+```

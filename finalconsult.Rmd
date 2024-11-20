@@ -1,0 +1,91 @@
+---
+title: "paste"
+author: "sts"
+date: "2024-11-19"
+output: html_document
+---
+```{r}
+library(rstanarm)
+library(dplyr)
+library(lme4)
+```
+
+```{r}
+perception_complete<-read.csv("./perception_complete.csv")
+```
+```{r}
+
+```
+
+
+
+
+```{r}
+ceb_click <- perception_complete %>%
+  filter(lang_source == "ceb", target == "click")
+
+ceb_knock <- perception_complete %>%
+  filter(lang_source == "ceb", target == "knock")
+
+spn_click <- perception_complete %>%
+  filter(lang_source == "spn", target == "click")
+
+spn_knock <- perception_complete %>%
+  filter(lang_source == "spn", target == "knock")
+
+```
+```{r}
+perception_complete[] <- lapply(perception_complete, function(x) {
+  if (is.character(x)) {
+    factor(x)  # 如果是字符型，转换为因子
+  } else {
+    x  # 如果不是字符型，则保持不变
+  }
+})
+perception_complete$rating <- factor(perception_complete$rating, 
+                            levels = sort(unique(perception_complete$rating)),  # 定义因子的水平
+                            ordered = TRUE)  # 指定为有序因子
+
+str(perception_complete)
+
+```
+```{r}
+ceb_click <- perception_complete %>%
+  filter(lang_source == "ceb", target == "click")
+
+ceb_knock <- perception_complete %>%
+  filter(lang_source == "ceb", target == "knock")
+
+spn_click <- perception_complete %>%
+  filter(lang_source == "spn", target == "click")
+
+spn_knock <- perception_complete %>%
+  filter(lang_source == "spn", target == "knock")
+
+```
+
+
+```{r}
+library(ordinal)
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,Hess = TRUE)
+
+fm2 <- clmm2(rating ~ vk, random=speaker, data=ceb_knock,Hess = TRUE,link="cloglog")
+# pr2 <- profile(fm2, range=c(.1, 10), nSteps=30, trace=0)
+# plot(pr2, main="ceb_knock")
+
+fm3 <- clmm2(rating ~ vk, random=speaker, data=spn_click,Hess = TRUE,link="cloglog")
+# pr3 <- profile(fm3, range=c(.1, 10), nSteps=30, trace=0)
+# plot(pr3, main="spn_click")
+
+fm4 <- clmm2(rating ~ vk, random=speaker, data=spn_knock,Hess = TRUE,link="cloglog")
+# pr4 <- profile(fm4, range=c(.1, 10), nSteps=30, trace=0)
+# plot(pr4, main="spn_knock")
+
+```
+```{r}
+summary(fm1)
+summary(fm2)
+summary(fm3)
+summary(fm4)
+```
+

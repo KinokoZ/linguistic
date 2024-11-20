@@ -1,8 +1,10 @@
 ---
 title: "Consulting"
-author: "sts"
+author: "Qiuyi Feng"
 date: "2024-10-26"
-output: pdf_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 ```{r}
 library(rstanarm)
@@ -10,27 +12,13 @@ library(dplyr)
 library(lme4)
 ```
 ```{r}
-perception_complete<-read.csv("/Users/fengqiuyi/Downloads/Homework/MA675/consult10.2/perception_complete.csv")
+perception_complete<-read.csv("./perception_complete.csv")
 ```
 ```{r}
-perception_complete$rating <- factor(perception_complete$rating, 
-                            levels = sort(unique(perception_complete$rating)),  # 定义因子的水平
-                            ordered = TRUE)  # 指定为有序因子
 
-str(perception_complete)
 ```
-```{r}
-perception_complete[] <- lapply(perception_complete, function(x) {
-  if (is.character(x)) {
-    factor(x)  # 如果是字符型，转换为因子
-  } else {
-    x  # 如果不是字符型，则保持不变
-  }
-})
 
-# 检查转换后的数据框结构
-str(ceb_click)
-```
+
 
 
 ```{r}
@@ -241,25 +229,60 @@ ggplot(df, aes(x = Fitted, y = Scaled_Residuals)) +
 
 ```
 
+```{r}
+perception_complete[] <- lapply(perception_complete, function(x) {
+  if (is.character(x)) {
+    factor(x)  # 如果是字符型，转换为因子
+  } else {
+    x  # 如果不是字符型，则保持不变
+  }
+})
+perception_complete$rating <- factor(perception_complete$rating, 
+                            levels = sort(unique(perception_complete$rating)),  # 定义因子的水平
+                            ordered = TRUE)  # 指定为有序因子
+
+str(perception_complete)
+```
+```{r}
+ceb_click <- perception_complete %>%
+  filter(lang_source == "ceb", target == "click")
+
+ceb_knock <- perception_complete %>%
+  filter(lang_source == "ceb", target == "knock")
+
+spn_click <- perception_complete %>%
+  filter(lang_source == "spn", target == "click")
+
+spn_knock <- perception_complete %>%
+  filter(lang_source == "spn", target == "knock")
+
+```
+
 
 ```{r}
 library(ordinal)
-fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click)
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,Hess = TRUE)
 pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
 plot(pr1, main="ceb_click")
 
-fm2 <- clmm2(rating ~ vk, random=speaker, data=ceb_knock)
-pr2 <- profile(fm2, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr2, main="ceb_knock")
+fm2 <- clmm2(rating ~ vk, random=speaker, data=ceb_knock,Hess = TRUE,link="cloglog")
+# pr2 <- profile(fm2, range=c(.1, 10), nSteps=30, trace=0)
+# plot(pr2, main="ceb_knock")
 
-fm3 <- clmm2(rating ~ vk, random=speaker, data=spn_click)
-pr3 <- profile(fm3, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr3, main="spn_click")
+fm3 <- clmm2(rating ~ vk, random=speaker, data=spn_click,Hess = TRUE,link="cloglog")
+# pr3 <- profile(fm3, range=c(.1, 10), nSteps=30, trace=0)
+# plot(pr3, main="spn_click")
 
-fm4 <- clmm2(rating ~ vk, random=speaker, data=spn_knock)
-pr4 <- profile(fm4, range=c(.1, 10), nSteps=30, trace=0)
-plot(pr4, main="spn_knock")
+fm4 <- clmm2(rating ~ vk, random=speaker, data=spn_knock,Hess = TRUE,link="cloglog")
+# pr4 <- profile(fm4, range=c(.1, 10), nSteps=30, trace=0)
+# plot(pr4, main="spn_knock")
 
+```
+```{r}
+summary(fm1)
+summary(fm2)
+summary(fm3)
+summary(fm4)
 ```
 
 
@@ -367,7 +390,7 @@ for(i in 1:length(fm1$ranef)) {
 }
 abline(h = 0, lty=2)
 
-fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,link ="loglog")
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,link ="cloglog")
 pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
 plot(pr1, main="ceb_click_loglog")
 ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
@@ -434,6 +457,10 @@ abline(h = 0, lty=2)
 
 
 ```{r}
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click, Hess = TRUE)
+summary(fm1)
+
+
 ```
 
 
@@ -442,21 +469,67 @@ abline(h = 0, lty=2)
 
 
 ```{r}
+library(ggplot2)
+library(ordinal)
+
+# 拟合模型
+fit <- clmm(rating ~ vk + (1|speaker), data = ceb_click)
+
+# 创建预测数据框
+pred_data <- data.frame(vk = seq(min(ceb_click$vk), max(ceb_click$vk), length.out = 100))
+pred_probs <- predict(fit, newdata = pred_data, type = "prob")
+
+# 将预测概率转换为长格式以便绘图
+pred_data_long <- cbind(pred_data, pred_probs)
+pred_data_long <- reshape2::melt(pred_data_long, id.vars = "vk", variable.name = "Rating", value.name = "Probability")
+
+# 绘制预测概率图
+ggplot(pred_data_long, aes(x = vk, y = Probability, color = Rating)) +
+  geom_line() +
+  labs(x = "vk", y = "Predicted Probability", title = "Predicted Probability by vk Levels") +
+  theme_minimal()
+
+
 ```
 
 
 ```{r}
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,link ="cloglog",threshold="equidistant",Hess = TRUE)
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_loglog")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_loglog")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
 ```
 
 
 ```{r}
+summary(fm1)
 ```
 
 
 ```{r}
-```
-
-
-```{r}
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,link = "cloglog",threshold = "equidistant")
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click_cloglog")
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click_cloglog")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
 ```
 

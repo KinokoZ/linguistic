@@ -1,0 +1,200 @@
+---
+title: "report"
+author: "Group2"
+date: "2024-11-12"
+output:
+  word_document: default
+  pdf_document: default
+---
+```{r,echo=FALSE,warning=FALSE}
+library(rstanarm)
+library(dplyr)
+library(lme4)
+```
+CLMM
+
+0.1 CLM Model Formula
+The Cumulative Link Mixed Model (CLMM), used in ordinal regression, extends the Cumulative Link Model (CLM) by including random effects, often to account for group-level variance. The general formula for the cumulative link mixed model is:
+
+
+\[
+P(Y \leq j \mid X, u) = g^{-1}(\theta_j - X\beta - u)
+\]
+
+
+where:
+
+\begin{itemize}
+    \item **Y** is the ordinal response variable with categories \(1, \ldots, J\).
+    \item \( j \) is an ordinal threshold for the \( j \)-th category.
+    \item **X** is the matrix of predictor variables, and \( \beta \) is the vector of fixed effect coefficients.
+    \item \( u \) represents the random effects (e.g., for clusters or repeated measures).
+    \item \( \theta_j \) are threshold parameters for each ordinal category, ensuring \( \theta_1 < \theta_2 < \cdots < \theta_{J-1} \).
+    \item \( g^{-1} \) is the inverse link function, typically a logit or probit function for ordinal models.
+\end{itemize}
+
+0.2 Why We Choose CLMM?
+We chose to use CLMM instead of LMER due to several advantages of the CLMM approach:
+
+No normality assumption: CLMM does not require residuals to follow a normal distribution, which is a typical assumption in LMER.
+No homoscedasticity assumption: CLMM does not assume homoscedasticity, allowing for greater flexibility with varying residual variances.
+Suitability for ordered and discrete data: CLMM is specifically designed to handle ordered and discrete dependent variables, making it a better fit for our dataset.
+
+
+```{r,echo=FALSE}
+perception_complete<-read.csv("./perception_complete.csv")
+```
+
+```{r,echo=FALSE}
+perception_complete[] <- lapply(perception_complete, function(x) {
+  if (is.character(x)) {
+    factor(x)  # 如果是字符型，转换为因子
+  } else {
+    x  # 如果不是字符型，则保持不变
+  }
+})
+perception_complete$rating <- factor(perception_complete$rating, 
+                            levels = sort(unique(perception_complete$rating)),  # 定义因子的水平
+                            ordered = TRUE)  # 指定为有序因子
+
+```
+
+
+```{r,echo=FALSE}
+ceb_click <- perception_complete %>%
+  filter(lang_source == "ceb", target == "click")
+
+ceb_knock <- perception_complete %>%
+  filter(lang_source == "ceb", target == "knock")
+
+spn_click <- perception_complete %>%
+  filter(lang_source == "spn", target == "click")
+
+spn_knock <- perception_complete %>%
+  filter(lang_source == "spn", target == "knock")
+
+```
+
+```{r,echo=FALSE,warning=FALSE}
+library(ordinal)
+cclogit <- clmm2(rating ~ vk, random=speaker, data=ceb_click,Hess = TRUE)
+cklogit <- clmm2(rating ~ vk, random=speaker, data=ceb_knock,Hess = TRUE)
+sclogit <- clmm2(rating ~ vk, random=speaker, data=spn_click,Hess = TRUE)
+sklogit <- clmm2(rating ~ vk, random=speaker, data=spn_knock,Hess = TRUE)
+ccprobit <- clmm2(rating ~ vk, random=speaker, data=ceb_click,Hess = TRUE,link = "probit")
+ckprobit <- clmm2(rating ~ vk, random=speaker, data=ceb_knock,Hess = TRUE,link = "probit")
+scprobit <- clmm2(rating ~ vk, random=speaker, data=spn_click,Hess = TRUE,link = "probit")
+skprobit <- clmm2(rating ~ vk, random=speaker, data=spn_knock,Hess = TRUE,link = "cloglog")
+cccloglog <- clmm2(rating ~ vk, random=speaker, data=ceb_click,Hess = TRUE,link = "cloglog")
+ckcloglog <- clmm2(rating ~ vk, random=speaker, data=ceb_knock,Hess = TRUE,link = "cloglog")
+sccloglog <- clmm2(rating ~ vk, random=speaker, data=spn_click,Hess = TRUE,link = "cloglog")
+skcloglog <- clmm2(rating ~ vk, random=speaker, data=spn_knock,Hess = TRUE,link = "cloglog")
+```
+```{r,echo=FALSE}
+library(knitr) 
+aic_values <- data.frame(
+  Link = c("logit", "probit", "cloglog"),
+  ceb_click = c(AIC(cclogit), AIC(ccprobit), AIC(cccloglog)),
+  ceb_knock = c(AIC(cklogit), AIC(ckprobit), AIC(ckcloglog)),
+  spn_click = c(AIC(sclogit), AIC(scprobit), AIC(sccloglog)),
+  spn_knock = c(AIC(sklogit), AIC(skprobit), AIC(skcloglog))
+)
+kable(aic_values, digits = 2)
+```
+```{r,echo=FALSE}
+fm1 <- clmm2(rating ~ vk, random=speaker, data=ceb_click,Hess = TRUE)
+fm2 <- clmm2(rating ~ vk, random=speaker, data=ceb_knock,Hess = TRUE)
+fm3 <- clmm2(rating ~ vk, random=speaker, data=spn_click,Hess = TRUE)
+fm4 <- clmm2(rating ~ vk, random=speaker, data=spn_knock,Hess = TRUE)
+```
+```{r}
+summary(sccloglog)
+```
+
+##the rating standard deviation-likelihood 
+```{r,echo=FALSE}
+pr1 <- profile(fm1, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr1, main="ceb_click")
+
+pr2 <- profile(fm2, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr2, main="ceb_knock")
+
+pr3 <- profile(fm3, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr3, main="spn_click")
+
+pr4 <- profile(fm4, range=c(.1, 10), nSteps=30, trace=0)
+plot(pr4, main="spn_knock")
+```
+```{r,echo=FALSE}
+summary(fm1)
+```
+Random Effects:
+
+speaker: The model includes random effects for “speaker” to account for variations across individual speakers.
+Variance (Var): The variance of the random effect for “speaker” is 1.8301, indicating the level of variability in the ratings due to individual differences among speakers.
+Standard Deviation (Std.Dev): The standard deviation for “speaker” is 1.3528.
+Location Coefficients (Fixed Effects):
+
+The model estimates the effects of the variable “vk” on “rating,” where vkik and vkuk are levels within “vk.”
+Estimate: The estimated effect size of “vkik” on “rating” is 0.8267, and for “vkuk” it’s 0.7426. Both indicate positive associations with rating.
+Standard Error: The standard errors for “vkik” (0.3261) and “vkuk” (0.3162) suggest the precision of these estimates.
+Z value & p-value: For vkik, z = 2.5354, p = 0.0112, and for vkuk, z = 2.3483, p = 0.0189. Both coefficients are statistically significant, indicating that these predictors have a significant effect on the rating.
+Threshold Coefficients:
+
+Thresholds represent cut points between ordinal categories, where each threshold (e.g., 1|2, 2|3, etc.) shows where one rating category transitions into the next.
+
+##The influence to the rating of each speaker 
+```{r,echo=FALSE}
+ci <- fm1$ranef + qnorm(0.975) * sqrt(fm1$condVar) %o% c(-1, 1)
+ord.re <- order(fm1$ranef)
+ci <- ci[order(fm1$ranef),]
+plot(1:length(fm1$ranef), fm1$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_click")
+axis(1, at=1:length(fm1$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm1$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+
+ci <- fm2$ranef + qnorm(0.975) * sqrt(fm2$condVar) %o% c(-1, 1)
+ord.re <- order(fm2$ranef)
+ci <- ci[order(fm2$ranef),]
+plot(1:length(fm2$ranef), fm2$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="ceb_knock")
+axis(1, at=1:length(fm2$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm2$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+ci <- fm3$ranef + qnorm(0.975) * sqrt(fm3$condVar) %o% c(-1, 1)
+ord.re <- order(fm3$ranef)
+ci <- ci[order(fm3$ranef),]
+plot(1:length(fm3$ranef), fm3$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="spn_click")
+axis(1, at=1:length(fm3$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm3$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+ci <- fm4$ranef + qnorm(0.975) * sqrt(fm4$condVar) %o% c(-1, 1)
+ord.re <- order(fm4$ranef)
+ci <- ci[order(fm4$ranef),]
+plot(1:length(fm4$ranef), fm4$ranef[ord.re], axes=FALSE, ylim=range(ci),
+     xlab="Speaker", ylab="Speaker effect",main="spn_knock")
+axis(1, at=1:length(fm4$ranef), labels = ord.re)
+axis(2)
+for(i in 1:length(fm4$ranef)) {
+  segments(i, ci[i, 1], i, ci[i, 2])
+}
+abline(h = 0, lty=2)
+
+```
+
+
+
